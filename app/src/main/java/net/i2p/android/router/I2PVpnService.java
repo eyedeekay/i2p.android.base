@@ -8,15 +8,15 @@ import android.support.annotation.Nullable;
 
 public class I2PVpnService extends VpnService {
 
-    I2PVpnManager mVpnManager;
+  I2PVpnManager mVpnManager;
 
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        mVpnManager.handleIntent(new Builder(),intent);
-        return Service.START_STICKY;
-    }
+  @Nullable
+  @Override
+  public IBinder onBind(Intent intent) {
+    return null;
+  }
+  public int onStartCommand(Intent intent, int flags, int startId) {
+    mVpnManager.handleIntent(new Builder(), intent);
+    return Service.START_STICKY;
+  }
 }
