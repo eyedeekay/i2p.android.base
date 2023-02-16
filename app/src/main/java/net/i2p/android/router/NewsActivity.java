@@ -1,6 +1,7 @@
 package net.i2p.android.router;
 
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
 
 import net.i2p.android.I2PActivityBase;
@@ -13,7 +14,10 @@ public class NewsActivity extends I2PActivityBase {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBar supportActionBar = getSupportActionBar();
+        if (supportActionBar != null) {
+            supportActionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         // Start with the base view
         if (savedInstanceState == null) {

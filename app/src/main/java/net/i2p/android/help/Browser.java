@@ -21,6 +21,8 @@ public class Browser implements Comparable<Browser> {
     public final boolean isRecommended;
 
     private boolean isInstalled;
+
+    public boolean isSocksified;
     /**
      * A browser that we don't know about.
      *

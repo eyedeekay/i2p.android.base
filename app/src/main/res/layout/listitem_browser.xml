@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -34,16 +35,26 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Primary" />
 
         <ImageView
+            android:id="@+id/browser_socks_icon"
+            android:layout_width="@dimen/listitem_picture_size"
+            android:layout_height="@dimen/listitem_picture_size"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="@dimen/listitem_icon_left_margin"
+            android:layout_marginLeft="@dimen/listitem_icon_left_margin"
+            android:scaleType="center" />
+
+        <ImageView
             android:id="@+id/browser_status_icon"
             android:layout_width="@dimen/listitem_picture_size"
             android:layout_height="@dimen/listitem_picture_size"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
-            android:layout_marginLeft="@dimen/listitem_icon_left_margin"
             android:layout_marginStart="@dimen/listitem_icon_left_margin"
-            android:scaleType="center"
-            android:visibility="gone" />
+            android:layout_marginLeft="@dimen/listitem_icon_left_margin"
+            android:scaleType="center" />
     </RelativeLayout>
 
     <View

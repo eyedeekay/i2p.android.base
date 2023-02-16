@@ -14,6 +14,7 @@ import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 
+import net.i2p.android.router.I2PVpnService;
 import net.i2p.android.router.R;
 import net.i2p.android.router.receiver.I2PReceiver;
 import net.i2p.android.router.util.Connectivity;
@@ -30,7 +31,7 @@ import java.lang.ref.WeakReference;
 /**
  * Runs the router
  */
-public class RouterService extends Service {
+public class RouterService extends I2PVpnService {
 
     /**
      * A request to this service for the current router state. Broadcasting

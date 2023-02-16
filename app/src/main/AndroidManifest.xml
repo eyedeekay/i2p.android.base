@@ -29,11 +29,16 @@
             android:icon="@drawable/ic_launcher_itoopie"
             android:enabled="true"
             android:exported="true"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_VPN_SERVICE">>
             <intent-filter>
                 <action android:name="net.i2p.android.router.service.IRouterState" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.net.VpnService"/>
+            </intent-filter>
         </service>
+
         <provider
             android:name=".provider.CacheProvider"
             android:authorities="${applicationId}.provider" />

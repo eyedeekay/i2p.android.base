@@ -28,12 +28,14 @@ public class BrowserAdapter extends RecyclerView.Adapter<BrowserAdapter.ViewHold
         public ImageView mIcon;
         public TextView mLabel;
         public ImageView mStatus;
+        public ImageView mCheckBox;
 
         public ViewHolder(View v) {
             super(v);
             mIcon = (ImageView) v.findViewById(R.id.browser_icon);
             mLabel = (TextView) v.findViewById(R.id.browser_label);
             mStatus = (ImageView) v.findViewById(R.id.browser_status_icon);
+            mCheckBox = (ImageView) v.findViewById(R.id.browser_socks_icon);
         }
     }
 
@@ -71,6 +73,20 @@ public class BrowserAdapter extends RecyclerView.Adapter<BrowserAdapter.ViewHold
         final Browser browser = mBrowsers[position];
         holder.mIcon.setImageDrawable(browser.icon);
         holder.mLabel.setText(browser.label);
+        if (browser.isSocksified) {
+            holder.mCheckBox.setImageDrawable(mCtx.getResources().getDrawable(R.drawable.ic_stat_router_active));
+        } else {
+            holder.mCheckBox.setImageDrawable(mCtx.getResources().getDrawable(R.drawable.ic_stat_router_waiting_network));
+        }
+        holder.mCheckBox.setOnClickListener(view -> {
+            if (browser.isSocksified) {
+                holder.mCheckBox.setImageDrawable(mCtx.getResources().getDrawable(R.drawable.ic_stat_router_waiting_network));
+                browser.isSocksified = false;
+            }else {
+                holder.mCheckBox.setImageDrawable(mCtx.getResources().getDrawable(R.drawable.ic_stat_router_active));
+                browser.isSocksified = true;
+            }
+        });
 
         if (browser.isKnown) {
             if (browser.isRecommended && browser.isInstalled(mCtx)) {
@@ -84,17 +100,14 @@ public class BrowserAdapter extends RecyclerView.Adapter<BrowserAdapter.ViewHold
             } else if (browser.isSupported && !browser.isInstalled(mCtx)) {
                 holder.mStatus.setImageDrawable(
                         mCtx.getResources().getDrawable(R.drawable.ic_shop_white_24dp));
-                holder.mStatus.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        String uriMarket = "market://search?q=pname:" + browser.packageName;
-                        Uri uri = Uri.parse(uriMarket);
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        try {
-                            mCtx.startActivity(intent);
-                        } catch (ActivityNotFoundException e) {
-                            Toast.makeText(mCtx, R.string.no_market_app, Toast.LENGTH_LONG).show();
-                        }
+                holder.mStatus.setOnClickListener(view -> {
+                    String uriMarket = "market://search?q=pname:" + browser.packageName;
+                    Uri uri = Uri.parse(uriMarket);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    try {
+                        mCtx.startActivity(intent);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(mCtx, R.string.no_market_app, Toast.LENGTH_LONG).show();
                     }
                 });
                 holder.mStatus.setVisibility(View.VISIBLE);
@@ -109,12 +122,7 @@ public class BrowserAdapter extends RecyclerView.Adapter<BrowserAdapter.ViewHold
             }
         }
 
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mListener.onBrowserSelected(browser);
-            }
-        });
+        holder.itemView.setOnClickListener(view -> mListener.onBrowserSelected(browser));
     }
 
     // Return the size of the dataset (invoked by the layout manager)
