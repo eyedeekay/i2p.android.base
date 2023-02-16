@@ -1,14 +1,34 @@
 package net.i2p.android.router;
 
+import android.annotation.TargetApi;
+import android.app.Application;
 import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.net.VpnService;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
-import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.runjva.sourceforge.jsocks.protocol.ProxyServer;
+import com.runjva.sourceforge.jsocks.server.ServerAuthenticatorNone;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.concurrent.TimeoutException;
 
 public class I2PVpnManager implements Handler.Callback {
     private static final String TAG = "OrbotVpnService";
@@ -20,7 +40,7 @@ public class I2PVpnManager implements Handler.Callback {
     private String mSessionName = "OrbotVPN";
     private ParcelFileDescriptor mInterface;
 
-//    private int mTorSocks = TorServiceConstants.SOCKS_PROXY_PORT_DEFAULT;
+//    private int mI2PSocks = I2PServiceConstants.SOCKS_PROXY_PORT_DEFAULT;
 
     public static int sSocksProxyServerPort = -1;
     public static String sSocksProxyLocalhost = null;
@@ -30,9 +50,9 @@ public class I2PVpnManager implements Handler.Callback {
 
 //    private final static boolean mIsLollipop = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
 
-    //this is the actual DNS server we talk to over UDP or TCP (now using Tor's DNS port)
+    //this is the actual DNS server we talk to over UDP or TCP (now using I2P's DNS port)
     private final static String DEFAULT_ACTUAL_DNS_HOST = "127.0.0.1";
-//    private final static int DEFAULT_ACTUAL_DNS_PORT = TorServiceConstants.TOR_DNS_PORT_DEFAULT;
+//    private final static int DEFAULT_ACTUAL_DNS_PORT = I2PServiceConstants.TOR_DNS_PORT_DEFAULT;
 
 
 
@@ -41,26 +61,30 @@ public class I2PVpnManager implements Handler.Callback {
     private boolean isRestart = false;
 
     private VpnService mService;
+    private ProxyServer mSocksProxyServer;
+    private char[] mI2PSocks;
+    private boolean mIsLollipop;
 
 
-    public OrbotVpnManager (VpnService service)
+    public I2PVpnManager (VpnService service)
     {
         mService = service;
 
-        //File fileBinHome = mService.getDir(TorServiceConstants.DIRECTORY_TOR_BINARY, Application.MODE_PRIVATE);
-        //filePdnsd = new File(fileBinHome,TorServiceConstants.PDNSD_ASSET_KEY);
+        File fileBinHome = mService.getDir("i2pvpn", Application.MODE_PRIVATE);
+        filePdnsd = new File(fileBinHome, "pdnsd");
 
         Tun2Socks.init();
 
     }
 
     //public int onStartCommand(Intent intent, int flags, int startId) {
-    public int handleIntent(Builder builder, Intent intent) {
+    public int handleIntent(VpnService.Builder builder, Intent intent) {
 
         if (intent != null)
         {
             String action = intent.getAction();
 
+            boolean mIsLollipop = false;
             if (action.equals("start"))
             {
 
@@ -69,7 +93,7 @@ public class I2PVpnManager implements Handler.Callback {
                 {
                     Log.d(TAG,"starting OrbotVPNService service!");
 
-                    //mTorSocks = intent.getIntExtra("torSocks", TorServiceConstants.SOCKS_PROXY_PORT_DEFAULT);
+                    //mI2PSocks = intent.getIntExtra("torSocks", I2PServiceConstants.SOCKS_PROXY_PORT_DEFAULT);
 
                     if (!mIsLollipop)
                     {
@@ -209,7 +233,7 @@ public class I2PVpnManager implements Handler.Callback {
         Tun2Socks.Stop();
 
         try {
-            //TorServiceUtils.killProcess(filePdnsd);
+            //I2PServiceUtils.killProcess(filePdnsd);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -228,7 +252,7 @@ public class I2PVpnManager implements Handler.Callback {
     }
 
 
-    private synchronized void setupTun2Socks(final Builder builder)  {
+    private synchronized void setupTun2Socks(final VpnService.Builder builder)  {
 
 
         if (mInterface != null) //stop tun2socks now to give it time to clean up
@@ -264,9 +288,9 @@ public class I2PVpnManager implements Handler.Callback {
                     final String defaultRoute = "0.0.0.0";
 
                     final String localSocks = localhost + ':'
-                            + String.valueOf(mTorSocks);
+                            + String.valueOf(mI2PSocks);
 
-                    final String localDNS = virtualGateway + ':' + "8091";//String.valueOf(TorServiceConstants.TOR_DNS_PORT_DEFAULT);
+                    final String localDNS = virtualGateway + ':' + "8091";//String.valueOf(I2PServiceConstants.TOR_DNS_PORT_DEFAULT);
                     final boolean localDnsTransparentProxy = true;
 
                     builder.setMtu(VPN_MTU);
@@ -319,17 +343,17 @@ public class I2PVpnManager implements Handler.Callback {
     }
 
 
-    /*@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void doLollipopAppRouting (Builder builder) throws NameNotFoundException
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void doLollipopAppRouting (VpnService.Builder builder) throws PackageManager.NameNotFoundException
     {
 
-        ArrayList<TorifiedApp> apps = TorifiedApp.getApps(mService, TorServiceUtils.getSharedPrefs(mService.getApplicationContext()));
+        /*ArrayList<I2PifiedApp> apps = I2PifiedApp.getApps(mService, I2PServiceUtils.getSharedPrefs(mService.getApplicationContext()));
 
         boolean perAppEnabled = false;
 
-        for (TorifiedApp app : apps)
+        for (I2PifiedApp app : apps)
         {
-            if (app.isTorified() && (!app.getPackageName().equals(mService.getPackageName())))
+            if (app.isI2Pified() && (!app.getPackageName().equals(mService.getPackageName())))
             {
                 builder.addAllowedApplication(app.getPackageName());
                 perAppEnabled = true;
@@ -338,9 +362,9 @@ public class I2PVpnManager implements Handler.Callback {
         }
 
         if (!perAppEnabled)
-            builder.addDisallowedApplication(mService.getPackageName());
+            builder.addDisallowedApplication(mService.getPackageName());*/
 
-    }*/
+    }
 
 
     /*public void onRevoke() {
@@ -349,7 +373,7 @@ public class I2PVpnManager implements Handler.Callback {
 
         if (!isRestart)
         {
-            SharedPreferences prefs = TorServiceUtils.getSharedPrefs(mService.getApplicationContext());
+            SharedPreferences prefs = I2PServiceUtils.getSharedPrefs(mService.getApplicationContext());
             prefs.edit().putBoolean("pref_vpn", false).commit();
             stopVPN();
         }
@@ -357,8 +381,7 @@ public class I2PVpnManager implements Handler.Callback {
         isRestart = false;
 
         //super.onRevoke();
-
-    }
+    }*/
 
     private void startDNS (String dns, int port) throws IOException, TimeoutException
     {
@@ -412,5 +435,5 @@ public class I2PVpnManager implements Handler.Callback {
 
             }
         }
-    }*/
+    }
 }

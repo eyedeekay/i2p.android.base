@@ -3,6 +3,8 @@ repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
+    maven { url 'https://jitpack.io' }
+    maven { url "https://raw.githubusercontent.com/guardianproject/gpmaven/master" }
 }
 
 android {
@@ -90,6 +92,7 @@ dependencies {
     androidTestImplementation('com.android.support.test.espresso:espresso-core:3.0.2') {
         exclude group: 'com.android.support', module: 'support-annotations'
     }
+    implementation 'com.gitlab.guardianproject:jsocksandroid:1.0.4'
 }
 
 dependencies {
